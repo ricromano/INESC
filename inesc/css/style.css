@@ -30,7 +30,7 @@ body { color: #333; background: #000; font-family: Segoe UI, Helvetica, Arial, S
 #main_searchBar { height: 75px; }
 input[type=search] { width: 40%; }
 
-#main_map { height: 350px; }
+#main_map { height: 450px; }
 
 #main_actionSelection { height: 75px; }
 
@@ -47,10 +47,88 @@ input[type=search] { width: 40%; }
   line-height: 1.5em;
 } 
 
-#main_case { width: 40%; }
-#main_caseImage { width: 60%; }
+.popup_box { height: 220px; }
 
-#main_caseImg { width: 400px; height: 300px; }
+#popup-content{
+  text-align: left;
+  font-size: 10px;
+}
+
+#main_caseDescription{
+  text-align: left;
+}
+
+#main_commentsLabel{
+  text-align: left;
+  font-size: 11px;
+}
+
+textarea{
+  resize: none;
+}
+
+#popup-main-buttons {
+  text-align: right;
+}
+
+#popup-edit-buttons {
+  text-align: left;
+}
+
+/*
+#main_case { width: 40%; }
+
+#main_caseImage { width: 120px; }
+*/
+#main_caseImg { width: 200px; height: 200px; border: 1px solid #cccccc; }
+
+
+.ol-popup {
+  display: none;
+  position: absolute;
+  background-color: white;
+  -moz-box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #cccccc;
+  bottom: 12px;
+  left: -50px;
+	width:240px;
+	height:370px;  
+}
+.ol-popup:after, .ol-popup:before {
+  top: 100%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+}
+.ol-popup:after {
+  border-top-color: white;
+  border-width: 10px;
+  left: 48px;
+  margin-left: -10px;
+}
+.ol-popup:before {
+  border-top-color: #cccccc;
+  border-width: 11px;
+  left: 48px;
+  margin-left: -11px;
+}
+.ol-popup-closer {
+  text-decoration: none;
+  position: absolute;
+  top: 2px;
+  right: 8px;
+}
+.ol-popup-closer:after {
+  content: "✖";
+}
+
 
 
 @media (max-width:750px) {
@@ -63,9 +141,6 @@ input[type=search] { width: 40%; }
 
 .cell {
   display: block;
-  //text-align: center;
-  //vertical-align: middle;
-  //line-height: 1.5em;
 } 
 
 #main_case { width: 100%; }

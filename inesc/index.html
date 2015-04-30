@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     
-    <link rel="stylesheet" href="libs/ol3/ol.css" type="text/css">
+    <link rel="stylesheet" href="libs/ol3-v3.4.0-dist/ol.css" type="text/css">
     <link rel="stylesheet" href="css/style.css" type="text/css">
     
     <script src="libs/jQuery/jquery-1.11.2.js" type="text/javascript"></script>
-    <script src="libs/ol3/ol.js" type="text/javascript"></script>
+    <script src="libs/ol3-v3.4.0-dist/ol.js" type="text/javascript"></script>
     <script src="js/main.js" type="text/javascript"></script>        
 
   </head>
@@ -19,66 +19,62 @@
     </div>
     <div class="body row scroll-y">
     
+      <div id="main_home">
+        <p>Página Inicial</p>
+      </div>
+    
       <div id="main_search">
         <div id="main_searchBar" class="box">
           <p>Insira o texto que pretende procurar (por exemplo a morada ou a localidade)</p>
           <input type="search" id="main_searchText" oninput="searchTextLenth(this.value)">
           <button onclick="searchAddress();" id="main_button_searchAddress">Procurar</button>
+          <button onclick="addFeature();" id="main_button_addFeature">Adicionar</button>
+          <button onclick="selectFeature();" id="main_button_selectFeature">Selecionar</button>          
           <p id="main_searchOutputText"></p>
         </div>
         
         <p></p>
         
-        <div id="main_map" class="box"></div>
-        
-        <p></p>
+        <div id="main_map" class="box">
+            <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+                <div id="popup-properties">
+                  <select id="main_select_case" onchange="getCaseInfo(this.value);">
+                    <option value="case01">Breve Descrição Caso 1</option>
+                    <option value="case02">Breve Descrição Caso 2</option>
+                    <option value="case03">Breve Descrição Caso 3</option>
+                    <option value="case04">Breve Descrição Caso 4</option>
+                    <option value="case05">Breve Descrição Caso 5</option>
+                    <option value="case06">Breve Descrição Caso 6</option>
+                    <option value="case07">Breve Descrição Caso 7</option>               
+                  </select>
+                  <p id="main_caseDescription">
+                    Descrição completa do Caso selecionado.
+                  </p>   
+                </div>
+                <div id="main_caseImage" class="popup_box">
+                  <img id="main_caseImg">          
+                </div>
+                <div id="popup-main-comments" class="popup_box">
+                  <p id="main_commentsLabel">Comentários:</p>        
+                  <textarea id="popup_comments" rows="8" cols="35" maxlength="150"></textarea>
+                </div>
+                <button id="popup_button_comments">Mostrar Comentários</button>
+                <p></p>                
+                <div id="popup-main-buttons">
+                  <button id="popup_button_edit">Editar</button>
+                  <button id="popup_button_delete">Remover</button>
+                </div>
+                <div id="popup-edit-buttons">
+                  <button id="popup_button_save_edit">Guardar</button>
+                  <button id="popup_button_cancel_edit">Cancelar</button>
+                </div>
 
-        <div id="main_actionSelection" class="box">
-          <p>Escolha a acção que pretende efectuar</p>
-          <select id="main_select_action" onchange="actionChanged(this.value);">
-            <option value="add">Adicionar</option>
-            <option value="edit">Editar</option>
-            <option value="remove">Remover</option>
-          </select>
-          <button onclick="selectAction();" id="main_button_selectAction">Continuar</button>
+                </div>
+            </div>            
         </div>
-      </div>
-      
-      <p></p>
-
-      
-      <div id="main_caseSelection" class="box">
-        <p>Escolha a opção que mais se adequa ao caso que está a reportar</p>
-        <div id="main_caseTable">
-          <div id="main_case" class="cell">
-            <select id="main_select_case" onchange="getCaseInfo(this.value);">
-              <option value="case01">Breve Descrição Caso 1</option>
-              <option value="case02">Breve Descrição Caso 2</option>
-              <option value="case03">Breve Descrição Caso 3</option>
-              <option value="case04">Breve Descrição Caso 4</option>
-              <option value="case05">Breve Descrição Caso 5</option>
-              <option value="case06">Breve Descrição Caso 6</option>
-              <option value="case07">Breve Descrição Caso 7</option>               
-            </select>
-            
-            <p id="main_caseDescription">
-              Descrição completa do Caso selecionado.
-            </p>   
-          </div>
-            
-          <div id="main_caseImage" class="cell">
-            <img id="main_caseImg">          
-          </div>
-        </div>
-        <p>Comentários</p>
-          
-        <div id="main_caseComments">
-          <textarea rows="8" cols="90" maxlength="150"></textarea>
-          <br>
-          <button onclick="saveCase();" id="main_button_saveCase">Guardar</button>
-        </div>
-      </div>
-          
+      </div>        
     
     </div>
     <div class="footer row">
