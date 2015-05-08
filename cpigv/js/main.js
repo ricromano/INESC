@@ -7,6 +7,8 @@ var container;
 var content;
 var closer;
 
+var options_cases = [];
+
 // TODO - workarround, select on selected
 var feature_selected;
 
@@ -65,7 +67,7 @@ var select_interaction = new ol.interaction.Select({
     return vector_layer.get('name') === 'vectorlayer_cases';
   },
   style: style_selected
-  //condition: ol.events.condition.mouseMove
+  //condition: ol.events.condition.pointerMove
   });
 
 // grab the features from the select interaction to use in the modify interaction
@@ -89,9 +91,12 @@ selected_features.on('add', function(event) {
   var coordinate = feature_selected.getGeometry().getCoordinates();
   //var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(coordinate, 'EPSG:3857', 'EPSG:4326'));
   overlay.setPosition(coordinate);
+  $("#popup_comments").val(feature_selected.get('comments'));
+  getCaseInfo(feature_selected.get('case_id')); //needed?? TODO
+  $('#main_select_case').val(feature_selected.get('case_id'));
   content.innerHTML = '<p>ID: ' + feature_selected.getId() + '</p>';
   // initial popup configuration
-  popupConfiguration(true, false)
+  popupConfiguration(true, false);
   container.style.display = 'block';
     
   // ...listen for changes and save them
@@ -109,7 +114,7 @@ selected_features.on('add', function(event) {
       $(document).off('mouseup');
     });
           
-    //TODO - save changes to DB
+    //TODO - save changes to DB (new coordinates)
   });
 });
 
@@ -140,11 +145,11 @@ draw_interaction.on('drawend', function(event) {
   map.addInteraction(modify_interaction);   
   
   // Save new Feature
-  // grab the feature
   var feature = event.feature;
   var coordinate = feature.getGeometry().getCoordinates();
-  var newID = savePoint(coordinate);
+  var newID = createFeature(coordinate);
   feature.setId(newID);
+  feature.set('case_id', 0);
 
   //features.push(feature);
 });
@@ -173,6 +178,8 @@ function init() {
   
   //Read Features from DB
   readFeatures();
+  //Read Cases from DB
+  readCases();
 
   //add the feature vector to the layer vector, and apply a style to whole layer
   var vectorLayer = new ol.layer.Vector({
@@ -199,15 +206,11 @@ function init() {
     })
   });
    
-  
   // Show divs Home
   goToStep(2);
   
   // Update main_button_searchAddress state
   disable("main_button_searchAddress", true);
-     
-  // Load case information (description and image)
-  getCaseInfo($("#main_select_case").val());
 
 	//Full Screen
 	var myFullScreenControl = new ol.control.FullScreen();
@@ -242,17 +245,27 @@ function init() {
   
   // handles with save edit Feature button
   $("#popup_button_save_edit").click(function(){
-    // TODO - save BD
+    // save feature properties
+    var comments_temp = $("#popup_comments").val();
+    var caseID_temp = $("#main_select_case").val();
+    feature_selected.set('comments', comments_temp);
+    feature_selected.set('case_id', caseID_temp);
+    //var comments = feature_selected.get('comments');
+    //var caseID = feature_selected.get('case_id');
+    // save to BD
+    modifyFeature(feature_selected.getGeometry().getCoordinates(), feature_selected.getId(), comments_temp, caseID_temp);
     popupConfiguration(false, false)       
   });
   
   // handles with cancel edit Feature button
   $("#popup_button_cancel_edit").click(function(){
-    // TODO - revert the changes...
+    // revert the changes...
+    $("#popup_comments").val(feature_selected.get('comments'));
+    getCaseInfo(feature_selected.get('case_id')); //needed?? TODO
+    $('#main_select_case').val(feature_selected.get('case_id'));
     popupConfiguration(false, false)              
   });
   
- 
   // handles with comments button
   $("#popup_button_comments").click(function(){
     var button_text = $("#popup_button_comments").text();
@@ -270,8 +283,16 @@ function init() {
       //document.getElementById('main_caseImage').style.display = 'block';
       //document.getElementById('popup-main-comments').style.display = 'none';    
     }               
-  });   
-   
+  }); 
+  
+  /*
+  // select feature hover effect  
+  var seleccion_hover = new ol.interaction.Select({
+    condition: ol.events.condition.pointerMove,
+    style: style_hover
+  });
+  map.addInteraction(seleccion_hover);    
+  */ 
 }
 
 // Configuration of the popup
@@ -384,9 +405,9 @@ function searchAddress(){
  * Center the map based on coordinates.
  */
 function CenterMap(long, lat) {
-    //console.log("Long: " + long + " Lat: " + lat);
-    map.getView().setCenter(ol.proj.transform([long, lat], 'EPSG:4326', 'EPSG:3857'));
-    map.getView().setZoom(16);
+  //console.log("Long: " + long + " Lat: " + lat);
+  map.getView().setCenter(ol.proj.transform([long, lat], 'EPSG:4326', 'EPSG:3857'));
+  map.getView().setZoom(16);
 }
 
 
@@ -402,25 +423,16 @@ function disable(i, val){
  * Read one specific case description.
  */
 function getCaseInfo(sel) {
-  
-  $(document).ready(function()
-  {
-    $.get('cases.xml', function(d){
 
-      $(d).find('case').each(function(){
-
-          var $cases = $(this); 
-          var title = $cases.attr("title");
-          if (title === sel){
-            var description = $cases.find('description').text();
-            var imageurl = $cases.attr('imageurl');
-            document.getElementById("main_caseDescription").innerHTML = description;
-            document.getElementById("main_caseImg").src = imageurl;
-            document.getElementById("main_caseImg").alt = sel;
-          }
-      });
-    });
+  $.each( options_cases, function( key, value ) {
+    if (Number(value.value) == sel){
+      document.getElementById("main_caseDescription").innerHTML = value.description;
+      document.getElementById("main_caseImg").src = value.path;
+      document.getElementById("main_caseImg").alt = value.text;
+      return false;
+    }
   });
+  
 }
 
 
@@ -450,14 +462,15 @@ function cleanInputs() {
 }
 */
 
+
 /**
- * Save point to DB.
+ * Saves the new Feature to DB.
  * Returns the Feature ID
  */
-function savePoint(coordinates) {
+function createFeature(coordinates) {
 
   var data = {
-    "action": "savePoint",
+    "action": "createFeature",
     "values": coordinates[0]+","+coordinates[1]
   };
   
@@ -467,7 +480,7 @@ function savePoint(coordinates) {
   $.ajax({
     type: "POST",
     dataType: "json",
-    url: "db.php",
+    url: "db/db.php",
     async: false,
     data: data,
     success: function(data) {
@@ -479,6 +492,40 @@ function savePoint(coordinates) {
   return featureID;
 }
 
+
+/**
+ * Save properties to DB.
+ */
+function modifyFeature(coordinates, featureID, comments, caseID) {
+
+  var data = {
+    "action": "modifyFeature",
+    "values": coordinates[0]+","+coordinates[1],
+    "featureID": featureID,
+    "comments": comments,
+    "caseID": caseID
+  };
+  
+  data = $(this).serialize() + "&" + $.param(data);
+  var featureID = 0;
+  
+  $.ajax({
+    type: "POST",
+    dataType: "json",
+    url: "db/db.php",
+    async: false,
+    data: data,
+    success: function(data) {
+      //alert("Successfull.\nReturned json: " + data["json"]);
+      // assync or sync - TODO
+    }
+    });
+}
+
+
+/**
+ * Delete one Feature from DB.
+ */
 function deleteFeature(featureID) { 
   
   var data = {
@@ -491,7 +538,7 @@ function deleteFeature(featureID) {
   $.ajax({
     type: "POST",
     dataType: "json",
-    url: "db.php",
+    url: "db/db.php",
     async: false,
     data: data,
     success: function(data) {
@@ -542,23 +589,59 @@ function readFeatures() {
   $.ajax({
     type: "POST",
     dataType: "json",
-    url: "db.php",
+    url: "db/db.php",
     async: true,
     data: data,
     success: function(data) {
       $.each(data, function(idx, obj) {
-        coord = obj.pontos_coordenadas.replace(/[()]/g, '');
+        coord = obj.features_coordinates.replace(/[()]/g, '');
         coord = coord.split(',');
         var iconFeature = new ol.Feature({
           geometry: new ol.geom.Point([Number(coord[0]),Number(coord[1])]),
-          name: 'name '
+          name: 'name ',
+          case_id: obj.features_case,
+          comments: obj.features_comments
         });
-        iconFeature.setId(obj.pontos_id);
-        vectorSource.addFeature(iconFeature);
+        iconFeature.setId(obj.features_id);
+        vectorSource.addFeature(iconFeature); 
       });
     }
   });  
  // return false;
 }
 
-    
+
+/**
+ * Read Cases from DB and fill the combo.
+ */
+function readCases() {
+
+  var data = {
+    "action": "readCases"
+  };
+  
+  data = $(this).serialize() + "&" + $.param(data);
+  
+  $.ajax({
+    type: "POST",
+    dataType: "json",
+    url: "db/db.php",
+    async: true,
+    data: data,
+    success: function(data) {
+      options_cases = data;
+
+      var sel = document.getElementById('main_select_case');
+      
+      $.each(data, function(idx, obj) {;
+        var opt = document.createElement('option');
+        opt.value = Number(obj.value);
+        opt.innerHTML = obj.text;
+        sel.appendChild(opt);
+      });
+    }
+  });  
+ // return false;
+}
+
+

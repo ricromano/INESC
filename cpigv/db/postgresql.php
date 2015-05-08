@@ -147,6 +147,27 @@ class postgresql {
 	
       return $primary;
   }
+
+  /**
+   * Update a row.
+   * @param str query
+   * @param array params
+   * @return bool
+   */
+ 
+  function updateRow($query, $params) {
+    $result = pg_query_params($this->db, $query, $params);
+ 
+    if ($result) {
+        $this->lastQueryResultResource = $result;
+        $result = true;
+    }
+    else {
+      //$result = false;
+      $result = pg_last_error(); 
+      }
+  }
+
 	
   /**
    * Update a row.
@@ -155,7 +176,7 @@ class postgresql {
    * @param str where
    * @return bool
    */
-  function updateRow($table, $values, $where) {
+  function updateRow2($table, $values, $where) {
       # translate from MySQL syntax :)
       $values = preg_replace('/"/','\'',$values);
       $values = preg_replace('/`/','"',$values); 
@@ -185,8 +206,8 @@ class postgresql {
         $result = true;
     }
     else {
-      //$result = false;
-      $result = pg_last_error(); 
+      $result = false;
+      //$result = pg_last_error(); 
       }
     return $result;
   }
